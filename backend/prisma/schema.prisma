@@ -1,0 +1,78 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id          String     @id @default(cuid())
+  name        String
+  description String
+  price       Float
+  stock       Int
+  category    String     // Misalnya: 'T-shirt', 'Jacket', 'Accessories', dll.
+  size        String[]   // Array ukuran, misalnya ['S', 'M', 'L', 'XL']
+  color       String[]   // Array warna, misalnya ['Red', 'Blue', 'Black']
+  images      String[]   // Array URL gambar produk
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  orderItems  OrderItem[] // Relasi ke OrderItem
+  cartItems   CartItem[]  // Relasi ke CartItem
+}
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  password  String
+  name      String
+  role      String    // 'ADMIN' atau 'CUSTOMER'
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  orders    Order[]   // Relasi ke Order
+  carts     Cart[]    // Relasi ke Cart (jika ingin mendukung lebih dari satu keranjang per user)
+}
+
+model Order {
+  id         String     @id @default(cuid())
+  userId     String
+  user       User       @relation(fields: [userId], references: [id])
+  totalPrice Float
+  status     String     // 'Pending', 'Shipped', 'Completed', etc.
+  createdAt  DateTime   @default(now())
+  orderItems OrderItem[]
+}
+
+model OrderItem {
+  id        String    @id @default(cuid())
+  orderId   String
+  order     Order     @relation(fields: [orderId], references: [id])
+  productId String
+  product   Product   @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float
+}
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id])
+  cartItems CartItem[] // Relasi ke CartItem
+}
+
+model CartItem {
+  id        String    @id @default(cuid())
+  cartId    String
+  cart      Cart      @relation(fields: [cartId], references: [id])
+  productId String
+  product   Product   @relation(fields: [productId], references: [id])
+  quantity  Int
+}
